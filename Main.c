@@ -145,35 +145,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
     switch (message) {
     case WM_KEYDOWN:
         switch (wParam) {
-        /*case VK_LEFT:
-            if (HERO.x != 0) {
-                if (HERO.velocityX < MAXSPEED)
-                {
-                    HERO.velocityX += MOVEMENTSPEED;
-                    HERO.x -= HERO.velocityX;
-                }
-                else {
-                    HERO.velocityX = HERO.velocityX;
-                    HERO.x -= HERO.velocityX;
-                }
-            }
-            break;
-        case VK_RIGHT:
-            if (HERO.x != 304) {
-                if (HERO.velocityX < MAXSPEED)
-                {
-                    HERO.velocityX += MOVEMENTSPEED;
-                    HERO.x += HERO.velocityX;
-                }
-                else {
-                    HERO.velocityX = HERO.velocityX;
-                    HERO.x += HERO.velocityX;
-                }
-                //HERO.velocityX += MOVEMENTSPEED;
-                //HERO.x += HERO.velocityX;
-            }
-            break;
-        */
         case VK_UP:
             if (HERO.y != 0) {
                 HERO.y -= 16;
