@@ -1,0 +1,10 @@
+#pragma once
+//#include "resource.h"
+
+//IDB_HERO1 BITMAP "hero1.bmp"
+//IDB_HERO2 BITMAP "hero2.bmp"
+//IDB_HERO3 BITMAP "hero3.bmp"
+
+//IDB_VILLAN BITMAP "villan.bmp"
+//IDB_SPACESHIP BITMAP "spaceship.bmp"
+//IDB_INTRO BITMAP "intro.bmp"
