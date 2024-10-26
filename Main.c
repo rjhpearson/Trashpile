@@ -1,58 +1,15 @@
-#include <windows.h>
-#include "Animations.c"
+// Main.c
 
-#define GAME_NAME L"Trashpile"
-#define GAME_WIDTH 320
-#define GAME_HEIGHT 240
-#define SPRITE_SIZE 16 // Define the sprite size for rendering
-#define FRAME_RATE 120 //60                   // 60 FPS
-#define FRAME_TIME (1000 / FRAME_RATE)  // 16.66 Frames
-#define ANIMATION_INTERVAL 100 // Animation interval in milliseconds
-#define GRAVITY 0.5
-#define MOVEMENTSPEED 0.5
-#define MAXSPEED 5
-#define JUMP_STRENGTH -10.0
+#include <windows.h>
+#include "Main.h"
+#include "GameLogic.h"
+#include "Graphics.h"
+#include "TrashBlock.h"
 
 int GAMESTATE = 0; // Start with the intro
 
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-void LoadBitmapsToMemory(HDC hdc, LPCSTR filePaths[], HBITMAP* hBitmaps, BITMAP* bitmaps, int frameCount);
-void UpdateFrame(double deltaTime);
-void RenderFrame(HWND hwnd);
-void UpdateAnimationFrames();
-
-typedef struct SPRITE
-{
-    int x;
-    int y;
-    HBITMAP hbitmaps[3];    // Array to hold multiple frames
-    BITMAP bitmaps[3];      // Array to hold multiple frame bitmaps
-    int currentFrame;       // Track the current frame
-    int frameCount;         // Total number of frames
-    BOOL Display;           // Display Sprite
-    double velocityY;       // Y velocity for gravity, initially set to 0
-    double velocityX;       // X velocity for controlling player movement
-} SPRITE;
-
-SPRITE HERO, HERO;
-
-// Backbuffer
-HDC hdcBackBuffer;
-HBITMAP hbmBackBuffer;
-
-// Variables for the intro state
-HBITMAP hbmIntro;
-BITMAP bmIntro;
-double introY = 0; // Start the intro bitmap at top of screen
-double introScrollSpeed = 5;  // Speed at which the intro scrolls
-
-DWORD lastAnimationTime = 0;
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow) {
 
-    HERO.x = 16;
-    HERO.y = 224;
-    HERO.velocityY = 0;
     HWND hwnd;
     MSG msg;
     WNDCLASS wndclass;
@@ -89,18 +46,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     hdcBackBuffer = CreateCompatibleDC(hdc);
     hbmBackBuffer = CreateCompatibleBitmap(hdc, GAME_WIDTH, GAME_HEIGHT);
     SelectObject(hdcBackBuffer, hbmBackBuffer);
-
     ReleaseDC(hwnd, hdc);
 
-    // Load the HERO's animation frames
-    LPCSTR HEROFilePaths[] = {
-        L"C:\\Users\\rjhpe\\OneDrive\\Desktop\\hero1.bmp",
-        L"C:\\Users\\rjhpe\\OneDrive\\Desktop\\hero2.bmp",
-        L"C:\\Users\\rjhpe\\OneDrive\\Desktop\\hero3.bmp"
-    };
-    HERO.frameCount = 3;
-    HERO.currentFrame = 0;
-    LoadBitmapsToMemory(hdcBackBuffer, HEROFilePaths, HERO.hbitmaps, HERO.bitmaps, HERO.frameCount);
+    // Load Sprites
+    InitializeHero(&HERO, HEROFilePaths);
+
+    // Initialise Trash Blocks
+    InitializeTrashBlocks();
 
     // Load the intro bitmap
     hbmIntro = (HBITMAP)LoadImage(NULL, L"C:\\Users\\rjhpe\\OneDrive\\Desktop\\intro.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
@@ -133,9 +85,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
         if (deltaTime >= FRAME_TIME) {
             lastFrameTime = currentTime;
-            UpdateFrame(deltaTime);
             UpdateAnimationFrames();  // Update animation frames based on the timer
             RenderFrame(hwnd);
+            if (GAMESTATE == 1)
+            {
+                UpdateFrame(&HERO, deltaTime, trashBlocks);
+                UpdateTrashBlocks(deltaTime);
+            }
         }
     }
     return msg.wParam;
@@ -193,64 +149,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 }
 
 
-void LoadBitmapsToMemory(HDC hdc, LPCSTR filePaths[], HBITMAP* hBitmaps, BITMAP* bitmaps, int frameCount) {
-    for (int i = 0; i < frameCount; i++) {
-        hBitmaps[i] = (HBITMAP)LoadImage(NULL, filePaths[i], IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-        
-        if (hBitmaps[i]) {
-            GetObject(hBitmaps[i], sizeof(BITMAP), &bitmaps[i]);
-        }
-        else {
-            MessageBox(NULL, L"Failed to load bitmap!", L"Error", MB_OK);
-            PostQuitMessage(0);
-        }
-    }
-}
-
-void UpdateFrame(double deltaTime) {
-
-    // Check key states for continuous movement
-    if (GetAsyncKeyState(VK_LEFT) & 0x8000) {
-        if (HERO.velocityX > -MAXSPEED) {
-            HERO.velocityX -= MOVEMENTSPEED;
-        }
-    }
-    else if (GetAsyncKeyState(VK_RIGHT) & 0x8000) {
-        if (HERO.velocityX < MAXSPEED) {
-            HERO.velocityX += MOVEMENTSPEED;
-        }
-    }
-    else {
-        HERO.velocityX = 0; // Stop moving if no key is pressed
-    }
-
-    // Apply gravity to the velocity
-    HERO.velocityY += GRAVITY; // *deltaTime;
-
-    // Update HERO's X position based on velocity
-    HERO.x += HERO.velocityX; // *deltaTime;
-
-    // Update HERO's Y position based on velocity
-    HERO.y += HERO.velocityY; // *deltaTime;
-
-    // Check for collision with the ground (assuming ground is at y = 224)
-    if (HERO.y >= 224) {
-        HERO.y = 224;
-        HERO.velocityY = 0; // Stop the sprite from falling further
-    }
-    
-}
-
 // Used to update sprint Animations
 void UpdateAnimationFrames() {
     DWORD currentTime = GetTickCount64();
 
     if (currentTime - lastAnimationTime >= ANIMATION_INTERVAL) {
         // Update HERO animation frame
-        HERO.currentFrame = (HERO.currentFrame + 1) % HERO.frameCount;
-
+        if (HERO.frameCount > 0) {
+            HERO.currentFrame = (HERO.currentFrame + 1) % HERO.frameCount;
+        }
         lastAnimationTime = currentTime;
     }
+
 }
 
 // Used to render the graphics
@@ -279,6 +189,8 @@ void RenderFrame(HWND hwnd) {
         SelectObject(hdcMem, HERO.hbitmaps[HERO.currentFrame]);
         BitBlt(hdcBackBuffer, HERO.x, HERO.y, SPRITE_SIZE, SPRITE_SIZE, hdcMem, 0, 0, SRCCOPY);
 
+        //Render Trash Blocks
+        RenderTrashBlocks(hdcBackBuffer);
         break;
     case 2:
         break;

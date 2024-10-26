@@ -127,12 +127,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Animations.c" />
+    <ClCompile Include="Graphics.c" />
+    <ClCompile Include="GameLogic.c" />
     <ClCompile Include="Main.c" />
+    <ClCompile Include="Sprite.c" />
+    <ClCompile Include="TrashBlock.c" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\OneDrive\Desktop\hero.bmp" />
     <Image Include="..\..\..\OneDrive\Desktop\hero1.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Config.h" />
+    <ClInclude Include="Graphics.h" />
+    <ClInclude Include="GameLogic.h" />
+    <ClInclude Include="Main.h" />
+    <ClInclude Include="Sprite.h" />
+    <ClInclude Include="TrashBlock.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
